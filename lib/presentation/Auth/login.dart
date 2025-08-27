@@ -146,7 +146,7 @@ class LoginScreen extends StatelessWidget {
                             errorBorder: OutlineInputBorder(
                               borderSide: const BorderSide(
                                 color: Colors.red,
-                                width: 1.5,
+                                width: 1.4,
                               ),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
