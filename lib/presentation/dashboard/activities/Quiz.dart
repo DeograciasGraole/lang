@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lang/presentation/dashboard/activities/cardQuiz.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+//comment
 class QuizPage extends StatefulWidget {
   QuizPage({super.key, required wordLearn});
 
