@@ -1,10 +1,48 @@
-import 'dart:ffi';
+// import 'dart:ffi';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:lang/presentation/dashboard/dashboar_page.dart';
+import 'package:lang/data/firebase/auth_service..dart';
+import 'package:lang/presentation/Auth/login.dart';
+import 'package:lang/presentation/dashboard/dashboard.dart';
+import 'package:lang/presentation/dashboard/pages/home_dashboar_page.dart';
 
-class RegisterScreen extends StatelessWidget {
-  const RegisterScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final formkey = GlobalKey<FormState>();
+
+  String username = "";
+
+  String email = "";
+
+  String password = "";
+
+  String errorMessage = "";
+
+  void registerUser() async {
+    try {
+      await authService.value.CreateAccount(email: email, password: password);
+      print("you have login ");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            return DashboardScreen();
+          },
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        errorMessage = e.message ?? "";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +72,8 @@ class RegisterScreen extends StatelessWidget {
 
                   SizedBox(height: 24),
                   Form(
+                    key: formkey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
                       children: [
                         TextFormField(
@@ -47,7 +87,7 @@ class RegisterScreen extends StatelessWidget {
                             hintStyle: const TextStyle(color: Colors.black26),
 
                             prefixIcon: const Icon(
-                              Icons.email_outlined,
+                              Icons.person,
                               color: Color.fromARGB(255, 94, 93, 95),
                             ),
 
@@ -100,6 +140,11 @@ class RegisterScreen extends StatelessWidget {
                               return "Please enter your email";
                             }
                             return null;
+                          },
+                          onSaved: (value) {
+                            setState(() {
+                              username = value ?? '';
+                            });
                           },
                         ),
                         SizedBox(height: 18),
@@ -168,6 +213,12 @@ class RegisterScreen extends StatelessWidget {
                             }
                             return null;
                           },
+
+                          onSaved: (value) {
+                            setState(() {
+                              email = value ?? '';
+                            });
+                          },
                         ),
                         SizedBox(height: 24),
                         TextFormField(
@@ -231,23 +282,58 @@ class RegisterScreen extends StatelessWidget {
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return "Please enter your email";
+                              return "Please enter your password";
                             }
                             return null;
+                          },
+                          onSaved: (value) {
+                            setState(() {
+                              password = value ?? '';
+                            });
                           },
                         ),
                         SizedBox(height: 18),
 
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) {
-                                  return DashboardScreen();
-                                },
-                              ),
-                            );
+                            final isValid = formkey.currentState!.validate();
+                            // FocusScope.of(context).unfocus();
+
+                            if (isValid) {
+                              formkey.currentState!.save();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return maindashboard();
+                                  },
+                                ),
+                              );
+                              // registerUser();
+                              // final message =
+                              //     'username : $username and password: $password email: $email ';
+
+                              // final snackBar = SnackBar(
+                              //   content: Text(
+                              //     message,
+                              //     style: TextStyle(fontSize: 23),
+                              //   ),
+                              //   backgroundColor: Colors.green,
+                              // );
+
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //     builder: (context) {
+                              //       return LoginScreen();
+                              //     },
+                              //   ),
+                              // );
+
+                              // ScaffoldMessenger.of(
+                              //   context,
+                              // ).showSnackBar(snackBar);
+                            }
                           },
                           child: Container(
                             width: double.infinity,
@@ -272,6 +358,16 @@ class RegisterScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 24),
                       ],
+                    ),
+                  ),
+                  Center(
+                    child: Text(
+                      errorMessage,
+                      style: TextStyle(
+                        color: const Color.fromARGB(255, 183, 58, 58),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   SizedBox(height: 34),

@@ -1,11 +1,66 @@
-import 'dart:ffi';
+// import 'dart:ffi';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:lang/data/firebase/auth_service..dart';
 import 'package:lang/presentation/Auth/register.dart';
-import 'package:lang/presentation/dashboard/dashboar_page.dart';
+import 'package:lang/presentation/dashboard/dashboard.dart';
+import 'package:lang/presentation/dashboard/pages/home_dashboar_page.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  String email = "";
+
+  String password = "";
+
+  String errorMessage = "";
+
+  final formkey = GlobalKey<FormState>();
+  // void loginUser() async {
+  //   try {
+  //     await authService.value.SignIn(email: email, password: password);
+  //     Navigator.push(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (context) {
+  //           return DashboardScreen();
+  //         },
+  //       ),
+  //     );
+  //   } on FirebaseAuthException catch (e) {
+  //     setState(() {
+  //       errorMessage = e.message ?? "";
+  //     });
+  //   }
+  // }
+
+  // void loginWithGoogle() async {
+  //   try {
+  //     final userCredential = await authService.value.signInWithGoogle();
+  //     if (userCredential != null) {
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => DashboardScreen()),
+  //       );
+  //     } else {
+  //       setState(() {
+  //         errorMessage = "Google Sign-In canceled by user" ?? "";
+  //       });
+  //       print("Google Sign-In canceled by user");
+  //     }
+  //   } catch (e) {
+  //     setState(() {
+  //       errorMessage = "Google Sign-In error: $e" ?? "";
+  //     });
+  //     print("Google Sign-In error: $e");
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +99,8 @@ class LoginScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 24),
                   Form(
+                    key: formkey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
                       children: [
                         TextFormField(
@@ -110,6 +167,11 @@ class LoginScreen extends StatelessWidget {
                               return "Please enter your email";
                             }
                             return null;
+                          },
+                          onSaved: (Value) {
+                            setState(() {
+                              email = Value ?? "";
+                            });
                           },
                         ),
                         SizedBox(height: 18),
@@ -178,6 +240,9 @@ class LoginScreen extends StatelessWidget {
                             }
                             return null;
                           },
+                          onSaved: (value) {
+                            password = value ?? "";
+                          },
                         ),
                         SizedBox(height: 24),
                         Row(
@@ -190,14 +255,45 @@ class LoginScreen extends StatelessWidget {
                         SizedBox(height: 24),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) {
-                                  return DashboardScreen();
-                                },
-                              ),
-                            );
+                            final isValid = formkey.currentState!.validate();
+                            FocusScope.of(context).unfocus();
+                            if (isValid) {
+                              formkey.currentState!.save();
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return maindashboard();
+                                  },
+                                ),
+                              );
+
+                              // loginUser();
+                              // final message =
+                              //     ' password: $password email: $email ';
+
+                              // final snackBar = SnackBar(
+                              //   content: Text(
+                              //     message,
+                              //     style: TextStyle(fontSize: 23),
+                              //   ),
+                              //   backgroundColor: Colors.green,
+                              // );
+
+                              // ScaffoldMessenger.of(
+                              //   context,
+                              // ).showSnackBar(snackBar);
+                            }
+
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) {
+                            //       return DashboardScreen();
+                            //     },
+                            //   ),
+                            // );
                           },
                           child: Container(
                             width: double.infinity,
@@ -257,6 +353,17 @@ class LoginScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+
+                  Center(
+                    child: Text(
+                      errorMessage,
+                      style: TextStyle(
+                        color: const Color.fromARGB(255, 183, 58, 58),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
                   SizedBox(height: 34),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -291,7 +398,17 @@ class LoginScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(100),
                         ),
                         child: IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            // loginWithGoogle();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return maindashboard();
+                                },
+                              ),
+                            );
+                          },
                           icon: Image(
                             width: 30,
                             height: 30,
