@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'envKey.dart';
 
 final dio = Dio(BaseOptions(baseUrl: 'https://api.openai.com/v1'));
 
@@ -21,8 +22,7 @@ Future<String> getAIResponse(String userMessage) async {
       options: Options(
         headers: {
           'Content-Type': 'application/json',
-          'Authorization':
-              'Bearer REPLACED_API_KEY', // 🔑 Replace with your key
+          'Authorization': 'Bearer $api_key',
         },
       ),
       data: {
