@@ -32,7 +32,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-lib/data/services/envKey.dart
+/lib/data/services/envKey.dart
 
 # Symbolication related
 app.*.symbols
