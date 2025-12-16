@@ -8,7 +8,10 @@ class IntroPage1 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
+      resizeToAvoidBottomInset: false,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           /// Animation
@@ -65,6 +68,7 @@ class IntroPage1 extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

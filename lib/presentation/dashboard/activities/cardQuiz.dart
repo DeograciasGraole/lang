@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 class QuizCard extends StatefulWidget {
   final String? question;
-  final List<String> options;
+  final List<dynamic> options;
   final correctIndex;
 
-  QuizCard({
+  const QuizCard({
     super.key,
     required this.question,
     required this.options,
@@ -17,114 +17,141 @@ class QuizCard extends StatefulWidget {
 }
 
 class _QuizCardState extends State<QuizCard> {
-  var selectAnswer = null;
-  var colorCorrect = Colors.green;
-  var colorDefault = Colors.blueGrey;
-  var colorwrong = Colors.red;
+  String? selectedAnswer;
 
-  void checkAnswer(selectAnswer, correct) {
-    if (selectAnswer == correct) {}
-  }
+  final colorCorrect = Colors.green;
+  final colorWrong = Colors.red;
+  final colorDefault = const Color(0xFFF3F4F6); // light grey
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // color: const Color.fromARGB(255, 112, 192, 199),
-      width: double.infinity,
-      height: 580,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // ✅ image of the word
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              'assets/images/lessonIcon1.jpg',
-              height: 150,
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // ✅ question word
-          Text(
-            widget.question.toString(),
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 24),
-
-          // ✅ Options inline
-          ...widget.options.map((item) {
-            var bgColor = colorDefault;
-            if (selectAnswer != null) {
-              if (item == widget.correctIndex && item == selectAnswer) {
-                bgColor = colorCorrect;
-              } else if (item != widget.correctIndex && item == selectAnswer) {
-                bgColor = colorwrong;
-              }
-
-              if (item == widget.correctIndex) {
-                bgColor = colorCorrect;
-              }
-            }
-
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  if (selectAnswer == null) {
-                    selectAnswer = item;
-                  }
-
-                  // checkAnswer(selectAnswer, widget.correctIndex);
-                });
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  border: Border.all(color: Colors.black26),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(item.toString(), style: TextStyle(fontSize: 18)),
-                    Icon(
-                      Icons.volume_down,
-                      color: const Color.fromARGB(255, 172, 229, 198),
-                      size: 27,
-                    ),
-                  ],
+    return Center(
+      child: Card(
+        elevation: 8,
+        shadowColor: Colors.black26,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ✅ image banner
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  'assets/images/lessonIcon1.jpg',
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
                 ),
               ),
-            );
-          }).toList(),
-          const Spacer(),
 
-          // ✅ Next button
-          // Container(
-          //   width: double.infinity,
-          //   padding: const EdgeInsets.symmetric(vertical: 14),
-          //   decoration: BoxDecoration(
-          //     color: Colors.blueAccent,
-          //     borderRadius: BorderRadius.circular(12),
-          //   ),
-          //   child: const Text(
-          //     "Next",
-          //     style: TextStyle(color: Colors.white, fontSize: 18),
-          //     textAlign: TextAlign.center,
-          //   ),
-          // ),
-        ],
+              const SizedBox(height: 20),
+
+              // ✅ question text
+              Text(
+                widget.question ?? "No question",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2C3E50),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              if (selectedAnswer != null)
+                Text(
+                  selectedAnswer == widget.correctIndex
+                      ? "✅ Correct!"
+                      : "❌ Wrong! The right answer is '${widget.correctIndex}'.",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: selectedAnswer == widget.correctIndex
+                        ? Colors.green
+                        : Colors.red,
+                  ),
+                ),
+              // ✅ Options
+              Column(
+                children: widget.options.map((option) {
+                  Color bgColor = colorDefault;
+                  Color borderColor = Colors.transparent;
+
+                  if (selectedAnswer != null) {
+                    if (option == widget.correctIndex &&
+                        option == selectedAnswer) {
+                      bgColor = colorCorrect.withOpacity(0.8);
+                      borderColor = Colors.green.shade700;
+                    } else if (option == selectedAnswer &&
+                        option != widget.correctIndex) {
+                      bgColor = colorWrong.withOpacity(0.8);
+                      borderColor = Colors.red.shade700;
+                    } else if (option == widget.correctIndex) {
+                      bgColor = colorCorrect.withOpacity(0.6);
+                      borderColor = Colors.green.shade700;
+                    }
+                  }
+
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: Material(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(14),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () {
+                          if (selectedAnswer == null) {
+                            setState(() {
+                              selectedAnswer = option;
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: borderColor, width: 2),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  option.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.volume_down_rounded,
+                                color: Color(0xFF4B6584),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 30),
+
+              // ✅ optional result text after selection
+            ],
+          ),
+        ),
       ),
     );
   }

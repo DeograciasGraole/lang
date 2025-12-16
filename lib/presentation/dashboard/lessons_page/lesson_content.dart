@@ -1,219 +1,172 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lang/data/providers/LessonProvider.dart';
+import 'package:lang/data/providers/lessonContent.dart';
+
 import 'package:lang/presentation/dashboard/activities/Quiz.dart';
 import 'package:lang/presentation/dashboard/activities/cardQuiz.dart';
 import 'package:lang/presentation/dashboard/lessons_page/grammr_lesson.dart';
 import 'package:lang/presentation/dashboard/lessons_page/vocabulery.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-class LessonPage extends StatefulWidget {
-  const LessonPage({super.key});
+class LessonPage extends ConsumerStatefulWidget {
+  final int lessonId;
+  final int idUnit;
+  const LessonPage({super.key, required this.lessonId, required this.idUnit});
 
   @override
-  State<LessonPage> createState() => _LessonPageState();
+  ConsumerState<LessonPage> createState() => _LessonPageState();
 }
 
-class _LessonPageState extends State<LessonPage> {
+class _LessonPageState extends ConsumerState<LessonPage> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
   bool onLastPage = false;
-  List<Map> WordVocabilary = [
-    {
-      "word": "Hello",
-      "translation": "Merhaba",
-      "image": "assets/images/started1.jpg",
-    },
-    {
-      "word": "Apple",
-      "translation": "Elma",
-      "image": "assets/images/apple.png",
-    },
-    {
-      "word": "Book",
-      "translation": "Kitap",
-      "image": "assets/images/started4.jpg",
-    },
-    {
-      "word": "Water",
-      "translation": "Su",
-      "image": "assets/images/lessonIcon1.jpg",
-    },
-    {
-      "word": "Sun",
-      "translation": "Güneş",
-      "image": "assets/images/lessonIcon.jpg",
-    },
-    {"word": "Dog", "translation": "Köpek", "image": "assets/images/basic.jpg"},
-    {"word": "Cat", "translation": "Kedi", "image": "assets/images/school.jpg"},
-    {"word": "Car", "translation": "Araba", "image": "assets/images/house.jpg"},
-    {"word": "House", "translation": "Ev", "image": "assets/images/house.jpg"},
-    {
-      "word": "School",
-      "translation": "Okul",
-      "image": "assets/images/school.jpg",
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
-    // 1️⃣ Vocabulary list
-
-    final lessonPages = [
-      // Vocabulary cards
-      ...WordVocabilary.map(
-        (item) => VocabularyCard(
-          targetWord: item["translation"]!,
-          translation: item["word"]!,
-          imagePath: item["image"]!,
-          onPlayAudio: () => debugPrint("Play ${item["word"]}"),
-        ),
-      ),
-
-      // Grammar card
-      // const GrammarCard(
-      //   title: "Present Simple Tense",
-      //   explanation:
-      //       "We use 'do/does' for questions.\nE.g., Do you like apples?",
-      // ),
-
-      // Quiz card
-      // const QuizCard(
-      //   question: "What is the plural of 'book'?",
-      //   options: ["Books", "Bookes", "Boks"],
-      //   correctIndex: 0,
-      // ),
-    ];
-
-    // 2️⃣ Build lesson pages
+    final lessonsContent = ref.watch(
+      lessonsContentProvider((widget.idUnit, widget.lessonId)),
+    );
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(
-        255,
-        240,
-        248,
-        243,
-      ), // soft background
+      backgroundColor: const Color.fromARGB(255, 240, 248, 243),
       appBar: AppBar(
         title: const Text(
           "Lesson 1 : Beginner",
           style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color.fromARGB(255, 210, 223, 234),
-
-        // centerTitle: true,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
+      body: lessonsContent.when(
+        data: (contents) {
+          // if (contents.isEmpty) {
+          //   return const Center(
+          //     child: Text(
+          //       "There are no lessons yet. They will be uploaded soon.",
+          //     ),
+          //   );
+          // }
+          final lesson = contents.first;
 
-            // Step text + linear progress
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  // Text(
-                  //   "Word ${_currentIndex + 1} of ${lessonPages.length}",
-                  //   style: const TextStyle(
-                  //     fontSize: 18,
-                  //     fontWeight: FontWeight.bold,
-                  //   ),
-                  // ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: (_currentIndex + 1) / lessonPages.length,
-                    backgroundColor: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(25),
-                    color: Color.fromARGB(255, 255, 106, 106),
-                    minHeight: 5,
+          // Build vocabPages dynamically from API
+          final vocabPages = lesson.vocabularies
+              .map(
+                (vocab) => VocabularyCard(
+                  targetWord: vocab.wordEn,
+                  translation: vocab.wordTr,
+                  imagePath: vocab.image ?? "assets/images/basic.jpg",
+                  exampleEn: vocab.exampleEn,
+                  exampleTr: vocab.exampleTr,
+                  onPlayAudio: () => debugPrint("Play ${vocab.wordEn}"),
+                ),
+              )
+              .toList();
+
+          return vocabPages.isEmpty
+              ? Center(
+                  child: Text(
+                    "There are no lessons yet. They will be uploaded soon.",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
-                ],
-              ),
-            ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 16),
 
-            const SizedBox(height: 16),
-
-            // Main PageView
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentIndex = index;
-
-                    onLastPage = (index == WordVocabilary.length - 1);
-                  });
-                },
-                itemCount: lessonPages.length,
-                itemBuilder: (context, index) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
+                      // Progress bar
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: LinearProgressIndicator(
+                          value: vocabPages.isEmpty
+                              ? 0.0
+                              : (_currentIndex + 1) / vocabPages.length,
+                          backgroundColor: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(25),
+                          color: const Color.fromARGB(255, 106, 181, 255),
+                          minHeight: 5,
+                        ),
                       ),
-                      child: lessonPages[index],
-                    ),
-                  );
-                },
-              ),
-            ),
 
-            onLastPage
-                ? GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) {
-                            return QuizPage(wordLearn: WordVocabilary);
+                      const SizedBox(height: 16),
+
+                      // PageView for vocab
+                      SizedBox(
+                        height: 300,
+                        child: PageView.builder(
+                          controller: _pageController,
+                          itemCount: vocabPages.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentIndex = index;
+                              onLastPage = index == vocabPages.length - 1;
+                            });
                           },
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 300,
-                      padding: EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 255, 106, 106),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Done',
-                          style: TextStyle(color: Colors.white),
+                          itemBuilder: (context, index) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 18,
+                            ),
+                            child: vocabPages[index],
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                : GestureDetector(
-                    onTap: () {
-                      print('this is onLast in the next : $onLastPage');
-                      _pageController.nextPage(
-                        duration: Duration(milliseconds: 500),
-                        curve: Curves.easeIn,
-                      );
-                    },
-                    child: Container(
-                      width: 300,
-                      padding: EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(61, 69, 182, 192),
-                        border: Border.all(color: Colors.black, width: 2),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Text(
-                        'Next',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: const Color.fromARGB(255, 0, 0, 0),
+
+                      // Next / Done button
+                      GestureDetector(
+                        onTap: () async {
+                          if (onLastPage) {
+                            // Navigate to your QuizPage
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => QuizPage(
+                                  QuizListQuestion: lesson.quizzes,
+                                  lesson_current: widget.lessonId,
+                                  unit_current: widget.idUnit,
+                                ),
+                              ),
+                            );
+                          } else {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeIn,
+                            );
+                          }
+                        },
+                        child: Container(
+                          width: 300,
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: onLastPage
+                                ? const Color.fromARGB(255, 106, 133, 255)
+                                : const Color.fromARGB(61, 69, 182, 192),
+                            border: Border.all(color: Colors.black, width: 2),
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: Center(
+                            child: Text(
+                              onLastPage ? 'Done' : 'Next',
+                              style: TextStyle(
+                                color: onLastPage
+                                    ? Colors.white
+                                    : const Color.fromARGB(255, 0, 0, 0),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-          ],
-        ),
+                );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text("Error: $error")),
       ),
     );
   }

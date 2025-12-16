@@ -8,7 +8,10 @@ class IntroPage3 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
+      resizeToAvoidBottomInset: false,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25.0),
           child: Column(
@@ -54,6 +57,7 @@ class IntroPage3 extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

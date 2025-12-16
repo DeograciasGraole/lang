@@ -1,6 +1,7 @@
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:lang/presentation/Auth/login.dart';
+import 'package:lang/presentation/Auth/register.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -8,7 +9,10 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
+      resizeToAvoidBottomInset: false,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Stack(
         children: [
           // 🔹 Background image
           Positioned.fill(
@@ -95,7 +99,7 @@ class HomePage extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) {
-                                return LoginScreen();
+                                return RegisterScreen();
                               },
                             ),
                           );
@@ -128,6 +132,7 @@ class HomePage extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

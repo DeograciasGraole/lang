@@ -6,14 +6,14 @@ import 'package:lang/presentation/dashboard/pages/chat_dashboard_page.dart';
 import 'package:lang/presentation/dashboard/pages/home_dashboar_page.dart';
 import 'package:lang/presentation/dashboard/pages/lesson_dashboard_page.dart';
 
-class maindashboard extends StatefulWidget {
-  const maindashboard({super.key});
+class MainDashboard extends StatefulWidget {
+  const MainDashboard({super.key});
 
   @override
-  State<maindashboard> createState() => _maindashboardState();
+  State<MainDashboard> createState() => _MainDashboardState();
 }
 
-class _maindashboardState extends State<maindashboard> {
+class _MainDashboardState extends State<MainDashboard> {
   int _selectedIndex = 0;
 
   // Screens for each tab
@@ -25,7 +25,7 @@ class _maindashboardState extends State<maindashboard> {
   ];
   final List<Widget> _ScreenPage = [
     DashboardScreen(),
-    LessonScreen(),
+    LessonScreen(UnitId: 1, title: "Basic Words and Concepts"),
     ChatScreen(),
   ];
 

@@ -20,17 +20,26 @@ class _OnBoardindScreenState extends State<OnBoardindScreen> {
     //controller to have keep of page we're on
 
     return Scaffold(
-      body: Stack(
-        children: [
-          PageView(
-            controller: _controller,
-            onPageChanged: (index) {
-              setState(() {
-                onLastPage = (index == 2);
-              });
-            },
-            children: [IntroPage1(), IntroPage2(), IntroPage3()],
-          ),
+      // Prevent keyboard from affecting layout
+      resizeToAvoidBottomInset: false,
+      body: GestureDetector(
+        // Dismiss keyboard when tapping anywhere
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Stack(
+          children: [
+            PageView(
+              controller: _controller,
+              onPageChanged: (index) {
+                setState(() {
+                  onLastPage = (index == 2);
+                });
+                // Dismiss keyboard when page changes
+                FocusScope.of(context).unfocus();
+              },
+              children: [IntroPage1(), IntroPage2(), IntroPage3()],
+            ),
 
           //dot indicator
           Container(
@@ -102,7 +111,8 @@ class _OnBoardindScreenState extends State<OnBoardindScreen> {
           ),
 
           // next or done
-        ],
+          ],
+        ),
       ),
     );
   }

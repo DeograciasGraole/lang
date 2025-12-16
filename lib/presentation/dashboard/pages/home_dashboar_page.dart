@@ -1,11 +1,18 @@
+import 'dart:ffi';
+
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:lang/data/firebase/auth_service..dart';
+import 'package:lang/data/providers/LessonProvider.dart';
+import 'package:lang/data/providers/UnitProvider.dart';
+import 'package:lang/data/providers/auth_notifier.dart';
+import 'package:lang/data/providers/movepageProvder.dart';
 import 'package:lang/presentation/Auth/login.dart';
+import 'package:lang/presentation/dashboard/pages/lesson_dashboard_page.dart';
 import 'package:lang/presentation/onboarding/intro_screens2.dart';
 import 'package:lang/presentation/onboarding/intro_screens3.dart'
     show IntroPage3;
@@ -13,16 +20,16 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 
 import '../../onboarding/intro_screens.dart';
 
-// import 'Module.dart';
+// import 'Module.dart';]
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final List<Map<String, dynamic>> modules = [
     {
       "title": "Basic for Beginner",
@@ -76,6 +83,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    //Log in and logout
+    final authState = ref.watch(authNotifierprovider);
+    final user = authState.value;
+    //Unit fecth
+    final unitsAsync = ref.watch(unitsProvider);
+    print(unitsAsync);
+
+    //lesson fecth
+    // final lessonsAsync = ref.watch(lessonsByUnitProvider(1));
+
+    //moving from home to lesson using provider
+    // final fromHomeToLesson = ref.watch(movePageProvider);
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
@@ -116,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Welcome back',
+                        'Welcome back ',
                         style: TextStyle(
                           color: const Color.fromARGB(255, 17, 16, 16),
                           fontSize: 23,
@@ -125,8 +144,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       SizedBox(width: 30),
                       Text(
-                        authService.value.currentUser?.email ??
-                            "No User logged in",
+                        // authService?.value.currentUser?.email ??
+                        // "wo",
+                        "${user?.name ?? ''}" ?? "no user ",
                         style: TextStyle(
                           color: const Color.fromARGB(255, 29, 29, 29),
                           fontSize: 12,
@@ -139,19 +159,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               GestureDetector(
                 onTap: () async {
-                  // try {
-                  //   await authService.value.signout();
-                  //   Navigator.push(
-                  //     context,
-                  //     MaterialPageRoute(
-                  //       builder: (context) {
-                  //         // return LoginScreen();
-                  //       },
-                  //     ),
-                  //   );
-                  // } on FirebaseAuthException catch (e) {
-                  //   print(e.message);
-                  // }
+                  await ref.read(authNotifierprovider.notifier).logout();
+
+                  // After logout → navigate back to LoginScreen
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
                 },
                 child: Icon(
                   Ionicons.settings_outline,
@@ -433,68 +449,106 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 500,
             height: 510,
             padding: const EdgeInsets.all(16),
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // 2 per row
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 4 / 3, // keeps them balanced
-              ),
-              itemCount: modules.length,
-              itemBuilder: (context, index) {
-                final module = modules[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 181, 179, 177),
-                    borderRadius: BorderRadius.circular(16),
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/${module["image"]}'),
-                      fit: BoxFit.cover, // makes image cover entire box
-                      colorFilter: ColorFilter.mode(
-                        Colors.black.withOpacity(
-                          0.3,
-                        ), // dark overlay for readability
-                        BlendMode.darken,
-                      ),
-                    ),
+            child: unitsAsync.when(
+              data: (units) {
+                return GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // 2 per row
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 4 / 3, // keeps them balanced
                   ),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircularPercentIndicator(
-                        radius: 30,
-                        percent: module["percent"],
-                        progressColor: const Color.fromARGB(255, 63, 146, 167),
-                        backgroundColor: Colors.grey.shade300,
-                        lineWidth: 8,
-                        center: Text(
-                          "${(module["percent"] * 100).toInt()}%",
-                          style: TextStyle(color: Colors.white),
+                  itemCount: units.length,
+                  itemBuilder: (context, index) {
+                    final module = modules[index];
+                    final unit = units[index];
+                    return GestureDetector(
+                      onTap: () {
+                        final unitId = units[index]["id"] is int
+                            ? units[index]["id"]
+                            : int.parse(units[index]["id"]);
+
+                        // ref
+                        //     .read(fromHomeToLesson.notifier)
+                        //     .state
+                        //     .state
+                        //     .update((state) => [...state, 1]);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) {
+                              return LessonScreen(
+                                UnitId: unitId,
+                                title: unit["title"],
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 181, 179, 177),
+                          borderRadius: BorderRadius.circular(16),
+                          image: DecorationImage(
+                            image: AssetImage(
+                              'assets/images/${module["image"]}',
+                            ),
+                            fit: BoxFit.cover, // makes image cover entire box
+                            colorFilter: ColorFilter.mode(
+                              Colors.black.withOpacity(
+                                0.3,
+                              ), // dark overlay for readability
+                              BlendMode.darken,
+                            ),
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircularPercentIndicator(
+                              radius: 30,
+                              percent: units[index]["total_percentage"] / 100,
+                              progressColor: const Color.fromARGB(
+                                255,
+                                63,
+                                146,
+                                167,
+                              ),
+                              backgroundColor: Colors.grey.shade300,
+                              lineWidth: 8,
+                              center: Text(
+                                "${((units[index]["total_percentage"] / 100) * 100).toInt()}%",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            Text(
+                              units[index]["title"],
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              "${units[index]["completed_lessons"]} of ${units[index]["total_lessons"]} Lessons",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Text(
-                        module["title"],
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      Text(
-                        module["lesson"],
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
+              error: (err, stack) => Center(child: Text("Error: $err")),
+              loading: () => Center(child: CircularProgressIndicator()),
             ),
           ),
         ],

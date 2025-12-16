@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:lang/data/firebase/auth_service..dart';
+import 'package:lang/data/providers/LessonProvider.dart';
+import 'package:lang/data/providers/lessonContent.dart'
+    show lessonsContentProvider;
+import 'package:lang/data/providers/userprogress.dart';
 import 'package:lang/presentation/dashboard/lessons_page/lesson_content.dart';
 import 'package:lang/presentation/dashboard/lessons_page/vocabulery.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 
-class LessonScreen extends StatelessWidget {
-  LessonScreen({super.key});
+class LessonScreen extends ConsumerStatefulWidget {
+  final int UnitId;
+  final String? title;
+  LessonScreen({super.key, required this.UnitId, required this.title});
+
+  @override
+  ConsumerState<LessonScreen> createState() => _LessonScreenState();
+}
+
+class _LessonScreenState extends ConsumerState<LessonScreen> {
   final PageController _controller = PageController();
 
   List<Widget> lessons_app = [
@@ -62,6 +74,25 @@ class LessonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //llessons of unit
+    final lessonsAsync = ref.watch(lessonsByUnitProvider(widget.UnitId));
+    // Content of lesson
+    // print(lessonsAsync);
+    lessonsAsync.when(
+      data: (lessons) {
+        // print(lessons[0].title); // ✅ Now this works!
+        return ListView.builder(
+          itemCount: lessons.length,
+          itemBuilder: (context, index) {
+            final lesson = lessons[index];
+            return ListTile(title: Text(lesson.title));
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Error: $error')),
+    );
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
@@ -111,8 +142,8 @@ class LessonScreen extends StatelessWidget {
                       ),
                       SizedBox(width: 30),
                       Text(
-                        authService.value.currentUser?.email ??
-                            "No User logged in",
+                        // authService.value.currentUser?.email ??
+                        "No User logged in",
                         style: TextStyle(
                           color: const Color.fromARGB(255, 29, 29, 29),
                           fontSize: 12,
@@ -148,7 +179,7 @@ class LessonScreen extends StatelessWidget {
             ],
           ),
         ),
-        automaticallyImplyLeading: false,
+        // automaticallyImplyLeading: false,
       ),
       body: ListView(
         children: [
@@ -209,8 +240,8 @@ class LessonScreen extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        const Text(
-                          "Basic Words and Concepts",
+                        Text(
+                          widget.title.toString(),
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -250,18 +281,97 @@ class LessonScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 1),
-          ...lessons_app.map((lesson) {
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(builder: (context) => LessonPage()),
+          // SizedBox(
+          //   height: 400,
+          //   child: lessonsAsync.when(
+          //     data: (lessons) {
+          //       print(lessons[0].title); // ✅ Now this works!
+          //       return ListView.builder(
+          //         itemCount: lessons.length,
+          //         itemBuilder: (context, index) {
+          //           final lesson = lessons[index];
+          //           return MyLessonTile(
+          //             isFirst: false,
+          //             isLast: true,
+          //             isPast: true,
+          //             title: "Lesson $index",
+          //             subtitle: lesson.title,
+          //             progress: 0.5,
+          //             locked: false,
+          //             image: "assets/images/started1.jpg",
+          //           );
+          //         },
+          //       );
+          //     },
+          //     loading: () => const Center(child: CircularProgressIndicator()),
+          //     error: (error, stack) => Center(child: Text('Error: $error')),
+          //   ),
+          // ),
+
+          // const SizedBox(height: 1),
+          // ...lessons_app.map((lesson) {
+          //   return GestureDetector(
+          //     onTap: () {
+          //       Navigator.push(
+          //         context,
+          //         MaterialPageRoute<void>(builder: (context) => LessonPage()),
+          //       );
+          //     },
+          //     child: lesson,
+          //   );
+          // }), before using the backend I was just using it like this
+          Container(
+            height: MediaQuery.of(context).size.height * 0.51,
+            child: lessonsAsync.when(
+              data: (lessons) {
+                return ListView(
+                  padding: const EdgeInsets.all(8),
+                  children: lessons.map((lesson) {
+                    // First lesson is always unlocked
+                    final isFirstLesson = lesson.order == 1;
+                    // print(isFirstLesson);
+                    // Determine if lesson is locked
+                    final isLocked =
+                        !isFirstLesson && lesson.progressPercentage == null;
+
+                    // Determine progress (0.0 to 1.0)
+                    final progress = (lesson.progressPercentage ?? 0) / 100;
+                    // print(progress);
+                    return GestureDetector(
+                      onTap: isLocked
+                          ? null // prevent opening locked lessons
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (context) => LessonPage(
+                                    lessonId: lesson.id,
+                                    idUnit: widget.UnitId,
+                                  ),
+                                ),
+                              );
+                            },
+                      child: MyLessonTile(
+                        isFirst: isFirstLesson,
+                        isLast: lesson.order == lessons.length,
+                        isPast: lesson.completed ?? false,
+                        title: lesson.title,
+                        subtitle: lesson.description,
+                        progress: lesson.progressPercentage != null
+                            ? progress
+                            : 0.0,
+                        locked: isLocked,
+                        image: "assets/images/started1.jpg",
+                      ),
+                    );
+                  }).toList(),
                 );
               },
-              child: lesson,
-            );
-          }),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(child: Text('Error: $error')),
+            ),
+          ),
+
           // Timeline lessons
         ],
       ),
@@ -354,6 +464,8 @@ class MyLessonTile extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
                           color: locked ? Colors.grey.shade600 : Colors.black87,
